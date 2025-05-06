@@ -129,7 +129,74 @@ write.table(parcelas, "raw_data_FLONA_ferns.txt", sep = "\t", row.names = FALSE)
 ### REORGANIZACAO DOS DADOS PARA O FORMATO LONGO ###
 ####################################################
 
-# Posso comecar daqui se eu importar o arquivo 'raw_data_FLONA_ferns.txt' do GitHub
+### Posso comecar daqui se eu importar o arquivo 'raw_data_FLONA_ferns.txt' do GitHub ###
 
 # Importa os dados do GitHub
-ferns = read.table("https://raw.githubusercontent.com/buenoas/FLONA_ferns/main/raw_data_FLONA_ferns.txt", header = TRUE)
+raw_data = read.table("https://raw.githubusercontent.com/buenoas/FLONA_ferns/main/raw_data_FLONA_ferns.txt", header = TRUE)
+
+# Transforma a coluna habitat de character para factor
+raw_data$habitat = factor(raw_data$habitat,
+                          levels = c("natural_forest",
+                                     "araucaria_plantation",
+                                     "pine_plantation"))
+
+# Transforma a coluna plot de character para factor
+raw_data$plot = factor(raw_data$plot,
+                       levels = c("N1", "N2", "N3", "N4", "N5", "N6",
+                                  "A1", "A2", "A3", "A4", "A5", "A6",
+                                  "P1", "P2", "P3", "P4", "P5", "P6"))
+
+# Transforma a coluna subplot de numeric para factor
+raw_data$subplot = factor(raw_data$subplot,
+                          levels = unique(sort(raw_data$subplot)))
+
+# Organiza os dados no formato longo 
+ferns = melt(raw_data)
+
+# Renomeia colunas
+colnames(ferns)[colnames(ferns) == "variable"] = "habit_distance"
+colnames(ferns)[colnames(ferns) == "value"] = "individuals"
+
+# Deleta "individuals_" da coluna "habit_distance"
+ferns$habit_distance = gsub("individuals_", "", ferns$habit_distance)
+
+# Transforma a coluna habit_distance de character para factor
+ferns$habit_distance = factor(ferns$habit_distance,
+                              levels = c("terrestrial_0.5m", "terrestrial_1.5m",
+                                         "epiphytic_0.5m", "epiphytic_1.5m"))
+
+# Organiza as linhas
+ferns = ferns[order(ferns$habitat,
+                    ferns$plot,
+                    ferns$subplot,
+                    ferns$habit_distance,
+                    ferns$family,
+                    ferns$species), ]
+
+# Remove o nome das linhas
+rownames(ferns) = NULL
+
+# Separa a coluna "habit_distance" em "habit" e "distance"
+# habit
+ferns$habit = ferns$habit_distance
+ferns$habit = gsub("_0.5m", "", ferns$habit)
+ferns$habit = gsub("_1.5m", "", ferns$habit)
+
+# distance
+ferns$distance_m = ferns$habit_distance
+ferns$distance_m = gsub("terrestrial_", "", ferns$distance_m)
+ferns$distance_m = gsub("epiphytic_", "", ferns$distance_m)
+ferns$distance_m = gsub("m", "", ferns$distance_m)
+ferns$distance_m = as.numeric(ferns$distance_m)
+
+# Deleta a coluna "habit_distance"
+ferns$habit_distance = NULL
+
+# Reorganiza as colunas
+ferns = ferns[, c(1:5, 7, 8, 6)]
+
+# Visualiza os dados
+head(ferns)
+
+# Salva os dados
+#write.table(ferns, "FLONA_ferns.txt", sep = "\t", row.names = FALSE)
