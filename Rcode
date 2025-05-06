@@ -1,0 +1,131 @@
+#######################################################
+### CODIGO DAS ANALISES PARA O ARTIGO DE SAMAMBAIAS ###
+### AUTOR: ANDERSON SALDANHA BUENO ####################
+### DATA: 06 DE MAIO DE 2025 ##########################
+#######################################################
+
+# LIMPA A AREA DE TRABALHO
+remove(list = ls())
+
+# REMOVE A NOTACAO CIENTIFICA
+options(scipen = 999)
+
+# DEFINE A AREA DE TRABALHO
+setwd("C:/Users/Anderson/OneDrive/Documents/Pesquisa/Carlos Lehn")
+
+# CARREGA OS PACOTES
+library(readxl)
+library(janitor)
+library(reshape2)
+
+# Importa os dados
+# Adiciona uma coluna com a parcela
+n1 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "N1"))
+n1$parcela = "N1"
+n2 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "N2"))
+n2$parcela = "N2"
+n3 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "N3"))
+n3$parcela = "N3"
+n4 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "N4"))
+n4$parcela = "N4"
+n5 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "N5"))
+n5$parcela = "N5"
+n6 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "N6"))
+n6$parcela = "N6"
+
+a1 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "A1"))
+a1$parcela = "A1"
+a2 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "A2"))
+a2$parcela = "A2"
+a3 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "A3"))
+a3$parcela = "A3"
+a4 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "A4"))
+a4$parcela = "A4"
+a5 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "A5"))
+a5$parcela = "A5"
+a6 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "A6"))
+a6$parcela = "A6"
+
+p1 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "P1"))
+p1$parcela = "P1"
+p2 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "P2"))
+p2$parcela = "P2"
+p3 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "P3"))
+p3$parcela = "P3"
+p4 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "P4"))
+p4$parcela = "P4"
+p5 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "P5"))
+p5$parcela = "P5"
+p6 = as.data.frame(read_xlsx("Tabela Amostragem samambaias e licófitas_ASB.xlsx", sheet = "P6"))
+p6$parcela = "P6"
+
+# Junta os dados
+parcelas = rbind(n1, n2, n3, n4, n5, n6,
+                 a1, a2, a3, a4, a5, a6,
+                 p1, p2, p3, p4, p5, p6)
+
+# Organiza os dados
+colnames(parcelas) = c("subplot", "family", "species",
+                       "individuals_terrestrial_0.5m", "individuals_terrestrial_1.5m",
+                       "individuals_epiphytic_0.5m", "individuals_epiphytic_1.5m",
+                       "plot")
+
+parcelas = parcelas[, c(8, 1:7)]
+
+
+# Corrige o nome das especies
+nomes_Carlos = as.data.frame(read_xlsx("nomes_samambaias_revisado_Carlos_ASB.xlsx", sheet = "ferns_flona"))
+
+# Seleciona so as colunas relevantes
+nomes_Carlos = nomes_Carlos[, c("planilha", "nome correto revisão Carlos")]
+
+# Arruma o nome das colunas
+colnames(nomes_Carlos) = c("nome_original", "nome_correto")
+
+# Seleciona so as linhas relevantes
+nomes_Carlos = na.omit(nomes_Carlos)
+
+
+# Arruma os nomes cientificos na planilha de dados brutos
+parcelas$species = nomes_Carlos$nome_correto[match(parcelas$species,
+                                                   nomes_Carlos$nome_original)]
+
+# Adiciona o tipo florestal
+parcelas$forest_type = NA
+parcelas$forest_type[grepl("N", parcelas$plot)] = "natural_forest"
+parcelas$forest_type[grepl("A", parcelas$plot)] = "araucaria_plantation"
+parcelas$forest_type[grepl("P", parcelas$plot)] = "pine_plantation"
+
+# Converte a coluna tipo florestal em fator
+parcelas$forest_type = factor(parcelas$forest_type,
+                              levels = c("natural_forest",
+                                         "araucaria_plantation",
+                                         "pine_plantation"))
+
+# Reordena as colunas
+parcelas = parcelas[, c(9, 1:8)]
+
+# Visualiza os dados
+head(parcelas)
+
+# Importa o nome das familias das especies
+reflora = read.csv("samambaias_RS_REFLORA.csv")
+
+# Atualiza o nome das familias
+parcelas$family = reflora$family[match(parcelas$species,
+                                       reflora$species)]
+
+# Substitui " " (espaco) por "_" no nome das especies
+parcelas$species = gsub(" ", "_", parcelas$species)
+
+# Troca o nome de uma coluna
+colnames(parcelas)[colnames(parcelas) == "forest_type"] = "habitat"
+
+# Salva a tabela de dados brutos definitiva
+write.table(parcelas, "raw_data_ferns_FLONA.txt", sep = "\t", row.names = FALSE)
+
+
+####################################################
+### REORGANIZACAO DOS DADOS PARA O FORMATO LONGO ###
+####################################################
+
