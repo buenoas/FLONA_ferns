@@ -122,10 +122,14 @@ parcelas$species = gsub(" ", "_", parcelas$species)
 colnames(parcelas)[colnames(parcelas) == "forest_type"] = "habitat"
 
 # Salva a tabela de dados brutos definitiva
-write.table(parcelas, "raw_data_ferns_FLONA.txt", sep = "\t", row.names = FALSE)
+write.table(parcelas, "raw_data_FLONA_ferns.txt", sep = "\t", row.names = FALSE)
 
 
 ####################################################
 ### REORGANIZACAO DOS DADOS PARA O FORMATO LONGO ###
 ####################################################
 
+# Posso comecar daqui se eu importar o arquivo 'raw_data_FLONA_ferns.txt' do GitHub
+
+# Importa os dados do GitHub
+ferns = read.table("https://raw.githubusercontent.com/buenoas/FLONA_ferns/main/raw_data_FLONA_ferns.txt", header = TRUE)
